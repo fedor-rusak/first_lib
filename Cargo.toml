@@ -1,6 +1,9 @@
 [package]
 name = "first_lib"
-version = "0.1.0"
-authors = ["Fedor Rusak <node@fedor-rusak.ru>"]
+version = "0.1.1"
+authors = [ "Fedor Rusak <node@fedor-rusak.ru>" ]
+links= "glfw3, glew32, OpenGL32"
+build = "build.rs"
 
 [dependencies]
+libc = "0.2.23"

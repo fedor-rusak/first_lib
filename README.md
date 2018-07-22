@@ -15,3 +15,11 @@ cargo test
 ```
 
 PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
+
+# History
+
+## 0.1.1
+  - native stuff + DLLs for MSVC 64. Many changes...
+
+## 0.1.0
+  - initial version with funny method and test.
