@@ -27,6 +27,8 @@ extern {
 	fn glfwWindowShouldClose(window: *mut GLFWwindow) -> c_int;
 	fn glfwSwapBuffers(window: *mut GLFWwindow) -> c_void;
 	fn glfwSetWindowSizeCallback(window: *mut GLFWwindow, onResizeCallback: extern fn(window: *mut GLFWwindow, i32, i32)) -> c_void;
+
+	fn glfwVulkanSupported() -> c_int;
 }
 
 #[link(name = "glew32")]
@@ -56,6 +58,16 @@ pub fn main() {
 
 		glfwInit();
 
+		let check_result: c_int = glfwVulkanSupported();
+		println!("Vulkan availability check result: {}", check_result);
+
+		if check_result == 1 {
+			println!("Vulkan loader is working!");
+		}
+		else {
+			println!("Vulkan loader not found!");
+			return
+		}
 		let window = glfwCreateWindow(800 as c_int, 600 as c_int, title, ptr::null_mut(), ptr::null_mut());
 
 		glfwSetWindowSizeCallback(window, on_resize_callback);
@@ -69,6 +81,7 @@ pub fn main() {
 		}
 		else {
 			println!("GLEW failed to initialize!");
+			return
 		}
 
 		glClearColor(0.3, 0.4, 0.1, 1.0);

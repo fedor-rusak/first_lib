@@ -1,6 +1,6 @@
 # first_lib
 
-Simple example of rust library which can be build via Cargo and has simple unit test.
+This is some complex library that uses some low-level graphics API.
 
 # Windows instructions from scratch
 
@@ -15,6 +15,12 @@ cargo test
 ```
 
 PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
+
+# Libraries used
+
+ * [GLFW](https://github.com/glfw/glfw) - zlib/libpng License
+ * [GLEW](https://github.com/nigels-com/glew) -  Modified BSD License, Mesa 3-D License (MIT License), and the Khronos License (MIT License)
+ * [Vulkan loader](https://www.lunarg.com/vulkan-sdk/) - Apache License, Version 2.0
 
 # History
 
