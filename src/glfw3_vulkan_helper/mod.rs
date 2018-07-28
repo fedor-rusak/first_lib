@@ -18,6 +18,9 @@ pub mod glfw_types {
 	pub enum GLFWwindow {}
 
 	pub type GLFWvkproc = *const libc::c_void;
+
+    pub const GLFW_TRUE: i32 = 1;
+    pub const GLFW_FALSE: i32 = 0;
 }
 
 use self::glfw_types::*;
@@ -53,7 +56,15 @@ pub fn main() -> i32 {
 	println!("Hello from rust-ffi-glfw!");
 
 	unsafe {
-		glfwInit();
+		let init_result = glfwInit();
+
+        if init_result == GLFW_TRUE {
+            println!("GLFW3 initialized!");
+        }
+        else {
+            println!("GLFW3 init failed!");
+            return 1
+        }
 
 		let check_result: c_int = glfwVulkanSupported();
 		println!("Vulkan availability check result: {}", check_result);
@@ -66,7 +77,7 @@ pub fn main() -> i32 {
 
             //this is some black magic thing
 			let create_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
-            let create_instance_function:  vkCreateInstance = mem::transmute(create_instance_proc);
+            let create_instance_function: vkCreateInstance = mem::transmute(create_instance_proc);
 
 
             let app_name = CString::new("VulkanTest").unwrap();
@@ -93,7 +104,7 @@ pub fn main() -> i32 {
             let create_info = VkInstanceCreateInfo {
                 s_type: VkStructureType::InstanceCreateInfo,
                 p_next: ptr::null(),
-                flags: Flags::Empty,
+                flags: VkFlags::Empty,
                 p_application_info: &appinfo,
                 pp_enabled_layer_names: ptr::null(),
                 enabled_layer_count: 0 as u32,
@@ -112,6 +123,14 @@ pub fn main() -> i32 {
                 println!("Failed to create instance!");
                 return 1
             };
+
+            let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
+            let function_name = string.as_ptr() as *const c_char;
+
+            //this is some black magic thing
+            let create_device_proc = glfwGetInstanceProcAddress(&mut instance, function_name);
+            let _create_device_function: vkCreateDevice = mem::transmute(create_device_proc);
+
 		}
 		else {
 			println!("Vulkan loader not found!");

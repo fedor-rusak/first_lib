@@ -35,6 +35,10 @@ pub type uint8_t = u8;
 pub type c_float = f32;
 pub type int32_t = i32;
 
+pub type Bool32 = uint32_t;
+pub type DeviceSize = uint64_t;
+pub type SampleMask = uint32_t;
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VkStructureType {
@@ -136,7 +140,7 @@ pub enum VkResult {
 pub struct VkInstanceCreateInfo {
     pub s_type: VkStructureType,
     pub p_next: *const c_void,
-    pub flags: Flags,
+    pub flags: VkFlags,
     pub p_application_info: *const VkApplicationInfo,
     pub enabled_layer_count: uint32_t,
     pub pp_enabled_layer_names: *const *const c_char,
@@ -159,14 +163,101 @@ pub struct VkApplicationInfo {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Flags {
+pub enum VkFlags {
     Empty = 0
 }
 
 #[allow(missing_copy_implementations)]
 pub enum VkAllocationCallbacks {}
 
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct DeviceCreateInfo {
+    pub s_type: VkStructureType,
+    pub p_next: *const c_void,
+    pub flags: VkFlags,
+    pub queue_create_info_count: uint32_t,
+    pub p_queue_create_infos: *const DeviceQueueCreateInfo,
+    pub enabled_layer_count: uint32_t,
+    pub pp_enabled_layer_names: *const *const c_char,
+    pub enabled_extension_count: uint32_t,
+    pub pp_enabled_extension_names: *const *const c_char,
+    pub p_enabled_features: *const PhysicalDeviceFeatures,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct DeviceQueueCreateInfo {
+    pub s_type: VkStructureType,
+    pub p_next: *const c_void,
+    pub flags: VkFlags,
+    pub queue_family_index: uint32_t,
+    pub queue_count: uint32_t,
+    pub p_queue_priorities: *const c_float,
+}
+
+ #[repr(C)]
+    pub struct PhysicalDeviceFeatures {
+        pub robust_buffer_access: Bool32,
+        pub full_draw_index_uint32: Bool32,
+        pub image_cube_array: Bool32,
+        pub independent_blend: Bool32,
+        pub geometry_shader: Bool32,
+        pub tessellation_shader: Bool32,
+        pub sample_rate_shading: Bool32,
+        pub dual_src_blend: Bool32,
+        pub logic_op: Bool32,
+        pub multi_draw_indirect: Bool32,
+        pub draw_indirect_first_instance: Bool32,
+        pub depth_clamp: Bool32,
+        pub depth_bias_clamp: Bool32,
+        pub fill_mode_non_solid: Bool32,
+        pub depth_bounds: Bool32,
+        pub wide_lines: Bool32,
+        pub large_points: Bool32,
+        pub alpha_to_one: Bool32,
+        pub multi_viewport: Bool32,
+        pub sampler_anisotropy: Bool32,
+        pub texture_compression_etc2: Bool32,
+        pub texture_compression_astc_ldr: Bool32,
+        pub texture_compression_bc: Bool32,
+        pub occlusion_query_precise: Bool32,
+        pub pipeline_statistics_query: Bool32,
+        pub vertex_pipeline_stores_and_atomics: Bool32,
+        pub fragment_stores_and_atomics: Bool32,
+        pub shader_tessellation_and_geometry_point_size: Bool32,
+        pub shader_image_gather_extended: Bool32,
+        pub shader_storage_image_extended_formats: Bool32,
+        pub shader_storage_image_multisample: Bool32,
+        pub shader_storage_image_read_without_format: Bool32,
+        pub shader_storage_image_write_without_format: Bool32,
+        pub shader_uniform_buffer_array_dynamic_indexing: Bool32,
+        pub shader_sampled_image_array_dynamic_indexing: Bool32,
+        pub shader_storage_buffer_array_dynamic_indexing: Bool32,
+        pub shader_storage_image_array_dynamic_indexing: Bool32,
+        pub shader_clip_distance: Bool32,
+        pub shader_cull_distance: Bool32,
+        pub shader_float64: Bool32,
+        pub shader_int64: Bool32,
+        pub shader_int16: Bool32,
+        pub shader_resource_residency: Bool32,
+        pub shader_resource_min_lod: Bool32,
+        pub sparse_binding: Bool32,
+        pub sparse_residency_buffer: Bool32,
+        pub sparse_residency_image2d: Bool32,
+        pub sparse_residency_image3d: Bool32,
+        pub sparse_residency2samples: Bool32,
+        pub sparse_residency4samples: Bool32,
+        pub sparse_residency8samples: Bool32,
+        pub sparse_residency16samples: Bool32,
+        pub sparse_residency_aliased: Bool32,
+        pub variable_multisample_rate: Bool32,
+        pub inherited_queries: Bool32,
+}
 
 vk_define_handle!(VkInstance);
+vk_define_handle!(VkDevice);
+vk_define_handle!(VkPhysicalDevice);
 
 pub type vkCreateInstance = fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> VkResult;
+pub type vkCreateDevice = fn(physical_device: VkPhysicalDevice, *const DeviceCreateInfo, *const VkAllocationCallbacks, *mut VkDevice) -> VkResult;
