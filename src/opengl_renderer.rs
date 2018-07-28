@@ -1,3 +1,6 @@
+use glfw3_helper::*;
+use glfw3_helper::glfw_types::*;
+
 use helper_old;
 
 use std::ptr;
@@ -6,28 +9,6 @@ use std::ffi::{CString};
 extern crate libc;
 
 use self::libc::{c_int, c_float, c_void, c_uint, c_char};
-
-#[allow(missing_copy_implementations)]
-pub enum GLFWmonitor {}
-
-#[allow(missing_copy_implementations)]
-pub enum GLFWwindow {}
-
-#[allow(missing_copy_implementations)]
-pub enum GLenum {}
-
-pub static GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(
-
-#[link(name = "glfw3")]
-extern {
-	fn glfwInit() -> c_int;
-	fn glfwPollEvents() -> c_int;
-	fn glfwCreateWindow(width: c_int, height: c_int, title: *const c_char, monitor: *mut GLFWmonitor, share: *mut GLFWwindow) -> *mut GLFWwindow;
-	fn glfwMakeContextCurrent(window: *mut GLFWwindow) -> c_void;
-	fn glfwWindowShouldClose(window: *mut GLFWwindow) -> c_int;
-	fn glfwSwapBuffers(window: *mut GLFWwindow) -> c_void;
-	fn glfwSetWindowSizeCallback(window: *mut GLFWwindow, onResizeCallback: extern fn(window: *mut GLFWwindow, i32, i32)) -> c_void;
-}
 
 #[link(name = "glew32")]
 extern "stdcall" { //this is some wicked mumbo-jumbo for windows macro and dll
@@ -47,29 +28,40 @@ extern fn on_resize_callback(window: *mut GLFWwindow, width: i32, height: i32) {
 }
 
 
-pub fn main() {
+pub fn main() -> i32 {
 	println!("Hello from rust-ffi-glfw!");
 
 	unsafe {
-		let string = CString::new("Hello from rust-ffi-glfw!".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
-		let title = string.as_bytes_with_nul().as_ptr() as *const c_char;
+		let init_result = glfwInit();
 
-		glfwInit();
+        if init_result == GLFW_TRUE {
+            println!("GLFW3 initialized!");
+        }
+        else {
+            println!("GLFW3 init failed!");
+            return 1
+        }
+
+
+		let string = CString::new("Hello from rust-ffi-glfw!").unwrap(); //tricky stuff. If written in one line string would vanish!
+		let title = string.as_ptr() as *const c_char;
 
 		let window = glfwCreateWindow(800 as c_int, 600 as c_int, title, ptr::null_mut(), ptr::null_mut());
 
+
 		glfwSetWindowSizeCallback(window, on_resize_callback);
 
-		glfwMakeContextCurrent(window);
 
+		glfwMakeContextCurrent(window);
 		println!("GLFW window was opened!");
+
 
 		if glewInit() == 0 {
 			println!("GLEW initialized!");
 		}
 		else {
 			println!("GLEW failed to initialize!");
-			return
+			return 1
 		}
 
 		glClearColor(0.3, 0.4, 0.1, 1.0);
@@ -90,4 +82,5 @@ pub fn main() {
 	println!("GLFW window was closed successfully!");
 
 	println!("Answer for evrything is {}!", helper_old::answer_for_everything());
+	return 0
 }

@@ -24,6 +24,9 @@ PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
 
 # History
 
+## 0.1.3
+  - refactored module structure. Now renderers are public API.
+
 ## 0.1.2
   - added stuff for Vulkan API
 

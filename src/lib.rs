@@ -1,15 +1,16 @@
 pub mod helper_old;
 
-pub mod glfw3_opengl_helper;
+pub mod opengl_renderer;
 
-pub mod glfw3_vulkan_helper;
+pub mod vulkan_renderer;
 
+mod glfw3_helper;
 
 #[cfg(test)]
 mod tests {
     use helper_old;
-    use glfw3_opengl_helper;
-    use glfw3_vulkan_helper;
+    use opengl_renderer;
+    use vulkan_renderer;
 
     #[test]
     fn it_works() {
@@ -24,8 +25,8 @@ mod tests {
 
     #[test]
     fn test_opengl_then_vulkan_main() {
-        glfw3_opengl_helper::main();
-        glfw3_vulkan_helper::main();
+        opengl_renderer::main();
+        vulkan_renderer::main();
     }
 
 }
