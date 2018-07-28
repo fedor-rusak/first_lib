@@ -1,24 +1,23 @@
-use helper_old;
-
-use std::default::Default;
+use std::mem;
 use std::ptr;
 use std::ffi::{CString};
 
 
 extern crate libc;
 
-use self::libc::{c_int, c_float, c_void, c_uint, c_char};
+use self::libc::{c_int, c_uint, c_char};
 
 
 pub mod glfw_types {
+    extern crate libc;
+
 	#[allow(missing_copy_implementations)]
 	pub enum GLFWmonitor {}
 
 	#[allow(missing_copy_implementations)]
 	pub enum GLFWwindow {}
 
-	#[allow(missing_copy_implementations)]
-	pub enum GLFWvkproc {}
+	pub type GLFWvkproc = *const libc::c_void;
 }
 
 use self::glfw_types::*;
@@ -35,15 +34,9 @@ pub static GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(
 #[link(name = "glfw3")]
 extern {
 	fn glfwInit() -> c_int;
-	fn glfwPollEvents() -> c_int;
-	fn glfwCreateWindow(width: c_int, height: c_int, title: *const c_char, monitor: *mut GLFWmonitor, share: *mut GLFWwindow) -> *mut GLFWwindow;
-	fn glfwMakeContextCurrent(window: *mut GLFWwindow) -> c_void;
-	fn glfwWindowShouldClose(window: *mut GLFWwindow) -> c_int;
-	fn glfwSwapBuffers(window: *mut GLFWwindow) -> c_void;
-	fn glfwSetWindowSizeCallback(window: *mut GLFWwindow, onResizeCallback: extern fn(window: *mut GLFWwindow, i32, i32)) -> c_void;
 
 	fn glfwVulkanSupported() -> c_int;
-	fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> *mut GLFWvkproc;
+	fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> GLFWvkproc;
 }
 
 
@@ -56,7 +49,7 @@ extern {
 //     ]
 // }
 
-pub fn main() {
+pub fn main() -> i32 {
 	println!("Hello from rust-ffi-glfw!");
 
 	unsafe {
@@ -68,10 +61,12 @@ pub fn main() {
 		if check_result == 1 {
 			println!("Vulkan loader is working!");
 
-			let string = CString::new("vkCreateInstance".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
-			let function_name = string.as_bytes_with_nul().as_ptr() as *const c_char;
+			let string = CString::new("vkCreateInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
+			let function_name = string.as_ptr() as *const c_char;
 
-			let createInstanceProc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name) as *const vkCreateInstance;
+            //this is some black magic thing
+			let create_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
+            let create_instance_function:  vkCreateInstance = mem::transmute(create_instance_proc);
 
 
             let app_name = CString::new("VulkanTest").unwrap();
@@ -87,32 +82,43 @@ pub fn main() {
                 api_version: vk_make_version!(1, 1, 77),
             };
 
-            let layer_names = [CString::new("VK_LAYER_LUNARG_standard_validation").unwrap()];
-            let layers_names_raw: Vec<*const i8> = layer_names
-                .iter()
-                .map(|raw_layer_name| raw_layer_name.as_ptr())
-                .collect();
+            // let layer_names = [CString::new("VK_LAYER_LUNARG_standard_validation").unwrap()];
+            // let layers_names_raw: Vec<*const i8> = layer_names
+            //     .iter()
+            //     .map(|raw_layer_name| raw_layer_name.as_ptr())
+            //     .collect();
 
             // let extension_names_raw = extension_names();
 
             let create_info = VkInstanceCreateInfo {
                 s_type: VkStructureType::InstanceCreateInfo,
                 p_next: ptr::null(),
-                flags: Default::default(),
+                flags: Flags::Empty,
                 p_application_info: &appinfo,
-                pp_enabled_layer_names: layers_names_raw.as_ptr(),
-                enabled_layer_count: layers_names_raw.len() as u32,
+                pp_enabled_layer_names: ptr::null(),
+                enabled_layer_count: 0 as u32,
                 pp_enabled_extension_names: ptr::null(),
                 enabled_extension_count: 0 as u32,
             };
 
-			(*createInstanceProc)(ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
+            let mut instance: VkInstance = mem::uninitialized();
+
+			let instance_creation_result = (create_instance_function)(&create_info, ptr::null(), &mut instance);
+
+            if instance_creation_result == VkResult::Success {
+                println!("Instance was created successfully!");
+            }
+            else {
+                println!("Failed to create instance!");
+                return 1
+            };
 		}
 		else {
 			println!("Vulkan loader not found!");
-			return
+			return 1
 		}
 	}
 
 	println!("Finished successfully!");
+    return 0
 }
