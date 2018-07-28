@@ -22,10 +22,10 @@ mod tests {
             answer);
     }
 
-    #[test]
-    fn test_opengl_main() {
-        glfw3_opengl_helper::main();
-    }
+    // #[test]
+    // fn test_opengl_main() {
+    //     glfw3_opengl_helper::main();
+    // }
 
     #[test]
     fn test_vulkan_main() {

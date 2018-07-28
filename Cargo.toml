@@ -1,8 +1,8 @@
 [package]
 name = "first_lib"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ "Fedor Rusak <node@fedor-rusak.ru>" ]
-links= "glfw3, glew32, OpenGL32"
+links= "glfw3, glew32, OpenGL32, Vulkan-1"
 build = "build.rs"
 
 [dependencies]

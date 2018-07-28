@@ -1,6 +1,6 @@
 # first_lib
 
-This is some complex library that uses some low-level graphics API.
+This is some complex library for playing with low-level graphics API under Windows.
 
 # Windows instructions from scratch
 
@@ -23,6 +23,9 @@ PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
  * [Vulkan loader](https://www.lunarg.com/vulkan-sdk/) - Apache License, Version 2.0
 
 # History
+
+## 0.1.2
+  - added stuff for Vulkan API
 
 ## 0.1.1
   - native stuff + DLLs for MSVC 64. Many changes...
