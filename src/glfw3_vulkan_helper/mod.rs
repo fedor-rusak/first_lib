@@ -1,5 +1,6 @@
 use helper_old;
 
+use std::default::Default;
 use std::ptr;
 use std::ffi::{CString};
 
@@ -23,6 +24,7 @@ pub mod glfw_types {
 use self::glfw_types::*;
 
 
+#[macro_use]
 pub mod vulkan_types;
 
 use self::vulkan_types::*;
@@ -44,13 +46,20 @@ extern {
 	fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> *mut GLFWvkproc;
 }
 
+
+// #[cfg(all(windows))]
+// fn extension_names() -> Vec<*const i8> {
+//     vec![
+//         Surface::name().as_ptr(),
+//         Win32Surface::name().as_ptr(),
+//         DebugReport::name().as_ptr(),
+//     ]
+// }
+
 pub fn main() {
 	println!("Hello from rust-ffi-glfw!");
 
 	unsafe {
-		let string = CString::new("Hello from rust-ffi-glfw!".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
-		let title = string.as_bytes_with_nul().as_ptr() as *const c_char;
-
 		glfwInit();
 
 		let check_result: c_int = glfwVulkanSupported();
@@ -63,7 +72,40 @@ pub fn main() {
 			let function_name = string.as_bytes_with_nul().as_ptr() as *const c_char;
 
 			let createInstanceProc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name) as *const vkCreateInstance;
-			// let instance: *mut VkInstance;
+
+
+            let app_name = CString::new("VulkanTest").unwrap();
+            let raw_name = app_name.as_ptr();
+
+            let appinfo = VkApplicationInfo {
+                p_application_name: raw_name,
+                s_type: VkStructureType::ApplicationInfo,
+                p_next: ptr::null(),
+                application_version: 0,
+                p_engine_name: raw_name,
+                engine_version: 0,
+                api_version: vk_make_version!(1, 1, 77),
+            };
+
+            let layer_names = [CString::new("VK_LAYER_LUNARG_standard_validation").unwrap()];
+            let layers_names_raw: Vec<*const i8> = layer_names
+                .iter()
+                .map(|raw_layer_name| raw_layer_name.as_ptr())
+                .collect();
+
+            // let extension_names_raw = extension_names();
+
+            let create_info = VkInstanceCreateInfo {
+                s_type: VkStructureType::InstanceCreateInfo,
+                p_next: ptr::null(),
+                flags: Default::default(),
+                p_application_info: &appinfo,
+                pp_enabled_layer_names: layers_names_raw.as_ptr(),
+                enabled_layer_count: layers_names_raw.len() as u32,
+                pp_enabled_extension_names: ptr::null(),
+                enabled_extension_count: 0 as u32,
+            };
+
 			(*createInstanceProc)(ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
 		}
 		else {

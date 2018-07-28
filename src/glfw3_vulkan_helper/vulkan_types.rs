@@ -1,5 +1,10 @@
 #![allow(non_camel_case_types, dead_code)]
 
+#[macro_export]
+macro_rules! vk_make_version {
+    ($major: expr, $minor: expr, $patch: expr) => ((($major as u32) << 22) | (($minor as u32) << 12) | $patch as u32)
+}
+
 macro_rules! vk_bitflags_wrapped {
     ($name: ident, $all: expr, $flag_type: ty) => {
         #[repr(C)]
