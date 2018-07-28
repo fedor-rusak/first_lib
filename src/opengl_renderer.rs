@@ -1,7 +1,6 @@
 use glfw3_helper::*;
 use glfw3_helper::glfw_types::*;
 
-use helper_old;
 
 use std::ptr;
 use std::ffi::{CString};
@@ -80,7 +79,5 @@ pub fn main() -> i32 {
 	}
 
 	println!("GLFW window was closed successfully!");
-
-	println!("Answer for evrything is {}!", helper_old::answer_for_everything());
 	return 0
 }

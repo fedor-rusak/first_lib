@@ -94,7 +94,7 @@ pub fn main() -> i32 {
                 println!("Instance was created successfully!");
             }
             else {
-                println!("Failed to create instance!");
+                println!("Failed to create instance! {:?}", instance_creation_result);
                 return 1
             };
 

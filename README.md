@@ -1,17 +1,16 @@
-# first_lib
+# render_lib
 
-This is some complex library for playing with low-level graphics API under Windows.
+Not so simple rust library for playing with low-level graphics API under Windows.
 
 # Windows instructions from scratch
 
  * Install Rust, Cargo with [rustup](https://www.rust-lang.org/en-US/install.html)
  * Install [Visual C++ Builds Tools 2015 or later](https://visualstudio.microsoft.com/ru/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15)
 
-Run these commands
+Run this in CMD. While being in Root folder:
 
 ```
-cargo build
-cargo test
+run.bat
 ```
 
 PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
