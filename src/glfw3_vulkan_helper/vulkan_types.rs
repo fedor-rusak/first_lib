@@ -11,6 +11,7 @@ macro_rules! vk_bitflags_wrapped {
                 $name {flags: 0}
             }
         }
+
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
                 write!(f, "{}({:b})", stringify!($name), self.flags)
@@ -144,6 +145,27 @@ macro_rules! vk_bitflags_wrapped {
     }
 }
 
+macro_rules! vk_define_handle{
+    ($name: ident) => {
+        #[derive(Clone, Copy, Debug)]
+        #[repr(C)]
+        pub struct $name{
+            ptr: *mut u8
+        }
+
+        unsafe impl Send for $name {}
+        unsafe impl Sync for $name {}
+
+        impl $name{
+            pub unsafe fn null() -> Self{
+                $name{
+                    ptr: ::std::ptr::null_mut()
+                }
+            }
+        }
+    }
+}
+
 //this is for traits used by macros
 use std::ops::*;
 use std::fmt;
@@ -223,8 +245,35 @@ pub enum VkStructureType {
     DebugReportCallbackCreateInfoExt = 1000011000,
 }   
 
-#[allow(missing_copy_implementations)]
-pub enum VkResult {}
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum VkResult {
+    Success = 0,
+    NotReady = 1,
+    Timeout = 2,
+    EventSet = 3,
+    EventReset = 4,
+    Incomplete = 5,
+    ErrorOutOfHostMemory = -1,
+    ErrorOutOfDeviceMemory = -2,
+    ErrorInitializationFailed = -3,
+    ErrorDeviceLost = -4,
+    ErrorMemoryMapFailed = -5,
+    ErrorLayerNotPresent = -6,
+    ErrorExtensionNotPresent = -7,
+    ErrorFeatureNotPresent = -8,
+    ErrorIncompatibleDriver = -9,
+    ErrorTooManyObjects = -10,
+    ErrorFormatNotSupported = -11,
+    ErrorFragmentedPool = -12,
+    ErrorSurfaceLostKhr = -1000000000,
+    ErrorNativeWindowInUseKhr = -1000000001,
+    SuboptimalKhr = 1000001003,
+    ErrorOutOfDateKhr = -1000001004,
+    ErrorIncompatibleDisplayKhr = -1000003001,
+    ErrorValidationFailedExt = -1000011001,
+}
+
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -258,3 +307,8 @@ vk_bitflags_wrapped!(VkInstanceCreateFlags, 0b0, Flags);
 
 #[allow(missing_copy_implementations)]
 pub enum VkAllocationCallbacks {}
+
+
+vk_define_handle!(VkInstance);
+
+pub type vkCreateInstance = fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> *mut VkResult;

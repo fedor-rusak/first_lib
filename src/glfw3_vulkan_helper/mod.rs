@@ -17,9 +17,6 @@ pub mod glfw_types {
 	pub enum GLFWwindow {}
 
 	#[allow(missing_copy_implementations)]
-	pub enum VkInstance {}
-
-	#[allow(missing_copy_implementations)]
 	pub enum GLFWvkproc {}
 }
 
@@ -45,8 +42,6 @@ extern {
 
 	fn glfwVulkanSupported() -> c_int;
 	fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> *mut GLFWvkproc;
-	fn PFN_vkCreateInstance(pCreateInfo: *const VkInstanceCreateInfo, pAllocator: *const VkAllocationCallbacks, pInstance: *mut VkInstance) -> *mut VkResult;
-	fn glfwGetRequiredInstanceExtensions(re_count: *mut i32) -> *const c_char;
 }
 
 pub fn main() {
@@ -64,12 +59,12 @@ pub fn main() {
 		if check_result == 1 {
 			println!("Vulkan loader is working!");
 
-			let string = CString::new("vkCreateInstance!".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
+			let string = CString::new("vkCreateInstance".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
 			let function_name = string.as_bytes_with_nul().as_ptr() as *const c_char;
 
-			let createInstanceProc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name) as *const fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> *mut VkResult;
+			let createInstanceProc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name) as *const vkCreateInstance;
 			// let instance: *mut VkInstance;
-			// (*createInstanceProc)(ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
+			(*createInstanceProc)(ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
 		}
 		else {
 			println!("Vulkan loader not found!");
