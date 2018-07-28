@@ -14,7 +14,20 @@ pub enum GLFWmonitor {}
 pub enum GLFWwindow {}
 
 #[allow(missing_copy_implementations)]
-pub enum GLenum {}
+pub enum VkInstance {}
+
+#[allow(missing_copy_implementations)]
+pub enum GLFWvkproc {}
+
+#[allow(missing_copy_implementations)]
+pub enum VkResult {}
+
+#[allow(missing_copy_implementations)]
+pub enum VkInstanceCreateInfo {}
+
+#[allow(missing_copy_implementations)]
+pub enum VkAllocationCallbacks {}
+
 
 pub static GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(
 
@@ -29,25 +42,10 @@ extern {
 	fn glfwSetWindowSizeCallback(window: *mut GLFWwindow, onResizeCallback: extern fn(window: *mut GLFWwindow, i32, i32)) -> c_void;
 
 	fn glfwVulkanSupported() -> c_int;
+	fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> *mut GLFWvkproc;
+	fn PFN_vkCreateInstance(pCreateInfo: *const VkInstanceCreateInfo, pAllocator: *const VkAllocationCallbacks, pInstance: *mut VkInstance) -> *mut VkResult;
+	fn glfwGetRequiredInstanceExtensions(re_count: *mut i32) -> *const c_char;
 }
-
-#[link(name = "glew32")]
-extern "stdcall" { //this is some wicked mumbo-jumbo for windows macro and dll
-	fn glewInit() -> c_int;
-}
-
-#[link(name = "OpenGL32")]
-extern "stdcall" {
-	fn glClearColor(r: c_float, g: c_float, b: c_float, a: c_float) -> c_void;
-	fn glClear(bitmask: c_uint) -> c_void;
-}
-
-
-#[allow(unused_variables)]
-extern fn on_resize_callback(window: *mut GLFWwindow, width: i32, height: i32) {
-    println!("I'm called from C with value {0} and {1}", width, height);
-}
-
 
 pub fn main() {
 	println!("Hello from rust-ffi-glfw!");
@@ -63,43 +61,19 @@ pub fn main() {
 
 		if check_result == 1 {
 			println!("Vulkan loader is working!");
+
+			let string = CString::new("vkCreateInstance!".as_bytes()).unwrap(); //tricky stuff. If written in one line string would vanish!
+			let function_name = string.as_bytes_with_nul().as_ptr() as *const c_char;
+
+			let createInstanceProc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name) as *const fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> *mut VkResult;
+			// let instance: *mut VkInstance;
+			(*createInstanceProc)(ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
 		}
 		else {
 			println!("Vulkan loader not found!");
 			return
 		}
-		let window = glfwCreateWindow(800 as c_int, 600 as c_int, title, ptr::null_mut(), ptr::null_mut());
-
-		glfwSetWindowSizeCallback(window, on_resize_callback);
-
-		glfwMakeContextCurrent(window);
-
-		println!("GLFW window was opened!");
-
-		if glewInit() == 0 {
-			println!("GLEW initialized!");
-		}
-		else {
-			println!("GLEW failed to initialize!");
-			return
-		}
-
-		glClearColor(0.3, 0.4, 0.1, 1.0);
-
-		loop {
-			glfwPollEvents();
-
-			if glfwWindowShouldClose(window) == 1 {
-				break;
-			}
-
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			glfwSwapBuffers(window);
-		};
 	}
 
 	println!("GLFW window was closed successfully!");
-
-	println!("Answer for evrything is {}!", helper_old::answer_for_everything());
 }

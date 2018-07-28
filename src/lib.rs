@@ -1,12 +1,15 @@
 pub mod helper_old;
 
-pub mod glfw3_helper;
+pub mod glfw3_opengl_helper;
+
+pub mod glfw3_vulkan_helper;
 
 
 #[cfg(test)]
 mod tests {
     use helper_old;
-    use glfw3_helper;
+    use glfw3_opengl_helper;
+    use glfw3_vulkan_helper;
 
     #[test]
     fn it_works() {
@@ -20,7 +23,12 @@ mod tests {
     }
 
     #[test]
-    fn maybe_main() {
-        glfw3_helper::main();
+    fn test_opengl_main() {
+        glfw3_opengl_helper::main();
+    }
+
+    #[test]
+    fn test_vulkan_main() {
+        glfw3_vulkan_helper::main();
     }
 }
