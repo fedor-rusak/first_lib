@@ -98,13 +98,26 @@ pub fn main() -> i32 {
                 return 1
             };
 
-            let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
+
+            // let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
+            // let function_name = string.as_ptr() as *const c_char;
+
+            // //this is some black magic thing
+            // let create_device_proc = glfwGetInstanceProcAddress(&mut instance, function_name);
+            // let _create_device_function: vkCreateDevice = mem::transmute(create_device_proc);
+
+
+
+            let string = CString::new("vkDestroyInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
             let function_name = string.as_ptr() as *const c_char;
 
             //this is some black magic thing
-            let create_device_proc = glfwGetInstanceProcAddress(&mut instance, function_name);
-            let _create_device_function: vkCreateDevice = mem::transmute(create_device_proc);
+            let destroy_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
+            let destroy_instance_function: vkDestroyInstance = mem::transmute(destroy_instance_proc);
 
+            (destroy_instance_function)(instance, ptr::null());
+
+            println!("Instance was destroyed successfully!");
 		}
 		else {
 			println!("Vulkan loader not found!");

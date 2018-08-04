@@ -260,4 +260,6 @@ vk_define_handle!(VkDevice);
 vk_define_handle!(VkPhysicalDevice);
 
 pub type vkCreateInstance = fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> VkResult;
+pub type vkDestroyInstance =  fn(instance: VkInstance, *const VkAllocationCallbacks);
+
 pub type vkCreateDevice = fn(physical_device: VkPhysicalDevice, *const DeviceCreateInfo, *const VkAllocationCallbacks, *mut VkDevice) -> VkResult;
