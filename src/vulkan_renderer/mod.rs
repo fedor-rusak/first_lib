@@ -99,6 +99,30 @@ pub fn main() -> i32 {
             };
 
 
+            let string = CString::new("vkEnumeratePhysicalDevices").unwrap(); //tricky stuff. If written in one line string would vanish!
+            let function_name = string.as_ptr() as *const c_char;
+
+            //this is some black magic thing
+            let enumerate_devices_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
+            let enumerate_devices_function: vkEnumeratePhysicalDevices = mem::transmute(enumerate_devices_proc);
+
+            let mut device_count = mem::uninitialized();
+            (enumerate_devices_function)(instance, &mut device_count, ptr::null_mut());
+
+            println!("Vulkan physical device count: {}", device_count);
+
+            let mut physical_devices = Vec::<VkPhysicalDevice>::with_capacity(device_count as usize);
+            let physical_device_enumarate_result = 
+                (enumerate_devices_function)(instance, &mut device_count, physical_devices.as_mut_ptr());
+
+            if physical_device_enumarate_result == VkResult::Success {
+                println!("Successfully enumerated physical devices!");
+            }
+            else {
+                println!("Failed to enumerate physical devices!");
+                return -1
+            }
+
             // let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
             // let function_name = string.as_ptr() as *const c_char;
 
