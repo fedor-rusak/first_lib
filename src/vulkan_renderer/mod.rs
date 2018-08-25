@@ -26,6 +26,25 @@ use self::vulkan_types::*;
 //     ]
 // }
 
+///
+/// This is the most complex thing in whole library by far.
+///
+/// # Idea
+///
+/// This piece of code should render something simple on screen using API from GLFW3 and Vulkan.
+///
+/// # Implementation
+///
+/// Corresponding docs are [Glfw3](http://www.glfw.org/docs/latest/vulkan_guide.html) and [Vulkan API Tutorial](https://vulkan.lunarg.com/doc/sdk/1.0.57.0/windows/tutorial/html/index.html)
+///
+/// 1) GLFW3 initialized.
+/// 2) Vulkan support is checked (technically speaking it looks for loader library)
+///
+/// 3) VkInstance is created (thing that is responsible for stateful communication with Vulkan-compatibe devices)
+/// 4) vkEnumeratePhysicalDevices is called two times in order to get data about first Vulkan-compatible physical device
+///
+/// 5) vkDestroyInstance is called to clean up everything
+///
 pub fn main() -> i32 {
 	println!("Hello from rust-ffi-glfw!");
 
@@ -48,6 +67,9 @@ pub fn main() -> i32 {
 
 			let string = CString::new("vkCreateInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
 			let function_name = string.as_ptr() as *const c_char;
+
+
+            //VkInstance part START
 
             //this is some black magic thing
 			let create_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
@@ -98,6 +120,10 @@ pub fn main() -> i32 {
                 return 1
             };
 
+            //VkInstance part END
+
+
+            //vkEnumeratePhysicalDevices part START
 
             let string = CString::new("vkEnumeratePhysicalDevices").unwrap(); //tricky stuff. If written in one line string would vanish!
             let function_name = string.as_ptr() as *const c_char;
@@ -123,6 +149,10 @@ pub fn main() -> i32 {
                 return -1
             }
 
+            //vkEnumeratePhysicalDevices part END
+
+
+
             // let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
             // let function_name = string.as_ptr() as *const c_char;
 
@@ -131,6 +161,7 @@ pub fn main() -> i32 {
             // let _create_device_function: vkCreateDevice = mem::transmute(create_device_proc);
 
 
+            //vkDestroyInstance START
 
             let string = CString::new("vkDestroyInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
             let function_name = string.as_ptr() as *const c_char;
@@ -142,6 +173,8 @@ pub fn main() -> i32 {
             (destroy_instance_function)(instance, ptr::null());
 
             println!("Instance was destroyed successfully!");
+
+            //vkDestroyInstance END
 		}
 		else {
 			println!("Vulkan loader not found!");

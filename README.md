@@ -8,10 +8,15 @@ Not so simple rust library for playing with low-level graphics API under Windows
  * Install [Visual C++ Builds Tools 2015 or later](https://visualstudio.microsoft.com/ru/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15)
  * Install win32 port of [GNU Make system](https://sourceforge.net/projects/gnuwin32/files/make/). Even old version will be sufficient. Don't forget to add its bin folder in PATH.
 
-Run this in CMD. While being in Root folder:
+Run this in CMD while being in Root folder to test library:
 
 ```
 make clean build test
+```
+
+Run this to get documentation in *target/doc/render_lib/index.html* about this library:
+```
+make doc
 ```
 
 PS Behind proxy set environment variables *http_proxy* and *https_proxy*.
