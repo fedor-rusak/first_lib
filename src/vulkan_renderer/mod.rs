@@ -1,14 +1,10 @@
-use glfw3_helper::*;
-use glfw3_helper::glfw_types::*;
-
 use std::mem;
 use std::ptr;
 use std::ffi::{CString};
 
 
-extern crate libc;
-
-use self::libc::c_char;
+use glfw3_helper::*;
+use glfw3_helper::glfw_types::*;
 
 
 #[macro_use]
@@ -16,15 +12,54 @@ pub mod vulkan_types;
 
 use self::vulkan_types::*;
 
+mod vk_functions {
+    pub static CREATE_INSTANCE: &'static str = "vkCreateInstance";
+    pub static ENUMERATE_PHYSICAL_DEVICES: &'static str = "vkEnumeratePhysicalDevices";
+    pub static GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES: &'static str = "vkGetPhysicalDeviceQueueFamilyProperties";
+    pub static DESTROY_INSTANCE: &'static str = "vkDestroyInstance";
+}
 
-// #[cfg(all(windows))]
-// fn extension_names() -> Vec<*const i8> {
-//     vec![
-//         Surface::name().as_ptr(),
-//         Win32Surface::name().as_ptr(),
-//         DebugReport::name().as_ptr(),
-//     ]
-// }
+
+///
+/// This function creates Vulkan instance. Which means:
+///
+/// 1) create application info
+/// 2) create "instance create info"
+/// 3) get pointer to Vulkan function
+/// 4) call instance creation
+///
+unsafe fn call_create_instance(result_instance: &mut VkInstance) -> VkResult {
+    let app_name = CString::new("VulkanTest").unwrap();
+    let raw_name = app_name.as_ptr();
+
+    let appinfo = VkApplicationInfo {
+        p_application_name: raw_name,
+        s_type: VkStructureType::ApplicationInfo,
+        p_next: ptr::null(),
+        application_version: 0,
+        p_engine_name: raw_name,
+        engine_version: 0,
+        api_version: vk_make_version!(1, 1, 77),
+    };
+
+    let create_info = VkInstanceCreateInfo {
+        s_type: VkStructureType::InstanceCreateInfo,
+        p_next: ptr::null(),
+        flags: flags::EMPTY,
+        p_application_info: &appinfo,
+        pp_enabled_layer_names: ptr::null(),
+        enabled_layer_count: 0 as u32,
+        pp_enabled_extension_names: ptr::null(),
+        enabled_extension_count: 0 as u32,
+    };
+
+    let create_instance_function: vkCreateInstance =
+        get_vk_function_with_null_vk_instance(vk_functions::CREATE_INSTANCE);
+
+    let instance_creation_result = create_instance_function(&create_info, ptr::null(), result_instance);
+
+    instance_creation_result
+}
 
 ///
 /// This is the most complex thing in whole library by far.
@@ -66,52 +101,12 @@ pub fn main() -> i32 {
 		if check_result == GLFW_TRUE {
 			println!("Vulkan loader is working!");
 
-			let string = CString::new("vkCreateInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
-			let function_name = string.as_ptr() as *const c_char;
 
-
-            //VkInstance part START
-
-            //this is some black magic thing
-			let create_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
-            let create_instance_function: vkCreateInstance = mem::transmute(create_instance_proc);
-
-
-            let app_name = CString::new("VulkanTest").unwrap();
-            let raw_name = app_name.as_ptr();
-
-            let appinfo = VkApplicationInfo {
-                p_application_name: raw_name,
-                s_type: VkStructureType::ApplicationInfo,
-                p_next: ptr::null(),
-                application_version: 0,
-                p_engine_name: raw_name,
-                engine_version: 0,
-                api_version: vk_make_version!(1, 1, 77),
-            };
-
-            // let layer_names = [CString::new("VK_LAYER_LUNARG_standard_validation").unwrap()];
-            // let layers_names_raw: Vec<*const i8> = layer_names
-            //     .iter()
-            //     .map(|raw_layer_name| raw_layer_name.as_ptr())
-            //     .collect();
-
-            // let extension_names_raw = extension_names();
-
-            let create_info = VkInstanceCreateInfo {
-                s_type: VkStructureType::InstanceCreateInfo,
-                p_next: ptr::null(),
-                flags: flags::EMPTY,
-                p_application_info: &appinfo,
-                pp_enabled_layer_names: ptr::null(),
-                enabled_layer_count: 0 as u32,
-                pp_enabled_extension_names: ptr::null(),
-                enabled_extension_count: 0 as u32,
-            };
+            //vkCreateInstance START
 
             let mut instance: VkInstance = mem::uninitialized();
 
-			let instance_creation_result = (create_instance_function)(&create_info, ptr::null(), &mut instance);
+			let instance_creation_result = call_create_instance(&mut instance);
 
             if instance_creation_result == VkResult::Success {
                 println!("Instance was created successfully!");
@@ -121,27 +116,23 @@ pub fn main() -> i32 {
                 return 1
             };
 
-            //VkInstance part END
+            //vkCreateInstance END
 
 
-            //vkEnumeratePhysicalDevices part START
+            //vkEnumeratePhysicalDevices START
 
-            let string = CString::new("vkEnumeratePhysicalDevices").unwrap(); //tricky stuff. If written in one line string would vanish!
-            let function_name = string.as_ptr() as *const c_char;
-
-            //this is some black magic thing
-            let enumerate_devices_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
-            let enumerate_devices_function: vkEnumeratePhysicalDevices = mem::transmute(enumerate_devices_proc);
+            let enumerate_devices_function: vkEnumeratePhysicalDevices =
+                get_vk_function_with_null_vk_instance(vk_functions::ENUMERATE_PHYSICAL_DEVICES);
 
             let mut device_count = mem::uninitialized();
-            (enumerate_devices_function)(instance, &mut device_count, ptr::null_mut());
+            enumerate_devices_function(instance, &mut device_count, ptr::null_mut());
 
             println!("Vulkan physical device count: {}", device_count);
 
             let mut physical_devices = Vec::<VkPhysicalDevice>::with_capacity(device_count as usize);
 
             let physical_device_enumarate_result = 
-                (enumerate_devices_function)(instance, &mut device_count, physical_devices.as_mut_ptr());
+                enumerate_devices_function(instance, &mut device_count, physical_devices.as_mut_ptr());
 
             if physical_device_enumarate_result == VkResult::Success {
                 println!("Successfully enumerated physical devices!");
@@ -155,26 +146,22 @@ pub fn main() -> i32 {
             physical_devices.set_len(device_count as usize);
             let chosen_physical_device = physical_devices[0];
 
-            //vkEnumeratePhysicalDevices part END
+            //vkEnumeratePhysicalDevices END
 
 
-            //vkGetPhysicalDeviceQueueFamilyProperties part START
+            //vkGetPhysicalDeviceQueueFamilyProperties START
 
-            let string = CString::new("vkGetPhysicalDeviceQueueFamilyProperties").unwrap(); //tricky stuff. If written in one line string would vanish!
-            let function_name = string.as_ptr() as *const c_char;
-
-            //this is some black magic thing
-            let get_queue_family_properties_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
-            let get_queue_family_properties_function: vkGetPhysicalDeviceQueueFamilyProperties = mem::transmute(get_queue_family_properties_proc);
+            let get_queue_family_properties_function: vkGetPhysicalDeviceQueueFamilyProperties =
+                get_vk_function_with_null_vk_instance(vk_functions::GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES);
 
             let mut queue_family_count = mem::uninitialized();
-            (get_queue_family_properties_function)(chosen_physical_device, &mut queue_family_count, ptr::null_mut());
+            get_queue_family_properties_function(chosen_physical_device, &mut queue_family_count, ptr::null_mut());
 
             println!("On first physical device we have this queue family count: {}", queue_family_count);
 
             let mut queue_families_properties = Vec::<VkQueueFamilyProperties>::with_capacity(queue_family_count as usize);
 
-            (get_queue_family_properties_function)(chosen_physical_device, &mut queue_family_count, queue_families_properties.as_mut_ptr());
+            get_queue_family_properties_function(chosen_physical_device, &mut queue_family_count, queue_families_properties.as_mut_ptr());
 
             //driver does not know about our internal counter in Vec
             queue_families_properties.set_len(queue_family_count as usize);
@@ -185,27 +172,15 @@ pub fn main() -> i32 {
 
             }
 
-            //vkGetPhysicalDeviceQueueFamilyProperties part END
-
-
-            // let string = CString::new("vkCreateDevice").unwrap(); //tricky stuff. If written in one line string would vanish!
-            // let function_name = string.as_ptr() as *const c_char;
-
-            // //this is some black magic thing
-            // let create_device_proc = glfwGetInstanceProcAddress(&mut instance, function_name);
-            // let _create_device_function: vkCreateDevice = mem::transmute(create_device_proc);
+            //vkGetPhysicalDeviceQueueFamilyProperties END
 
 
             //vkDestroyInstance START
 
-            let string = CString::new("vkDestroyInstance").unwrap(); //tricky stuff. If written in one line string would vanish!
-            let function_name = string.as_ptr() as *const c_char;
+            let destroy_instance_function: vkDestroyInstance = 
+                get_vk_function_with_null_vk_instance(vk_functions::DESTROY_INSTANCE);
 
-            //this is some black magic thing
-            let destroy_instance_proc = glfwGetInstanceProcAddress(ptr::null_mut(), function_name);
-            let destroy_instance_function: vkDestroyInstance = mem::transmute(destroy_instance_proc);
-
-            (destroy_instance_function)(instance, ptr::null());
+            destroy_instance_function(instance, ptr::null());
 
             println!("Instance was destroyed successfully!");
 

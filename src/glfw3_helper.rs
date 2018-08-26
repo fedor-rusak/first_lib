@@ -1,5 +1,9 @@
 extern crate libc;
 
+use std::mem;
+use std::ptr;
+use std::ffi::{CString};
+
 use self::libc::{c_int, c_void, c_uint, c_char};
 
 
@@ -39,3 +43,28 @@ extern {
 }
 
 pub const GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(
+
+///
+/// This function hides some pointer juggling for retrieving Vulkan-specific functions from GLFW3.
+///
+pub unsafe fn get_vk_function<T>(vk_instance: *mut VkInstance, function_name: &str) -> T {
+    let string = CString::new(function_name).unwrap(); //tricky stuff. If written in one line string would vanish!
+    let function_name = string.as_ptr() as *const c_char;
+
+
+    //this is some black magic thing
+    let proc = glfwGetInstanceProcAddress(vk_instance, function_name);
+
+    //this part is deepest depth of black magic
+    let result_function = mem::transmute_copy::<GLFWvkproc, T>(&proc);
+    mem::forget(proc);
+
+    result_function
+}
+
+///
+/// Hellper for calling get_vk_function with default first parameter.
+///
+pub unsafe fn get_vk_function_with_null_vk_instance<T>( function_name: &str) -> T {
+    get_vk_function::<T>(ptr::null_mut(), function_name)
+}
