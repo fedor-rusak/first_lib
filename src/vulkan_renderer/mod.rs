@@ -16,6 +16,7 @@ mod vk_functions {
     pub static CREATE_INSTANCE: &'static str = "vkCreateInstance";
     pub static ENUMERATE_PHYSICAL_DEVICES: &'static str = "vkEnumeratePhysicalDevices";
     pub static GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES: &'static str = "vkGetPhysicalDeviceQueueFamilyProperties";
+    pub static CREATE_LOGICAL_DEVICE: &'static str = "vkCreateDevice";
     pub static DESTROY_INSTANCE: &'static str = "vkDestroyInstance";
 }
 
@@ -32,7 +33,7 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
     let app_name = CString::new("VulkanTest").unwrap();
     let raw_name = app_name.as_ptr();
 
-    let appinfo = VkApplicationInfo {
+    let application_info = VkApplicationInfo {
         p_application_name: raw_name,
         s_type: VkStructureType::ApplicationInfo,
         p_next: ptr::null(),
@@ -42,11 +43,11 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
         api_version: vk_make_version!(1, 1, 77),
     };
 
-    let create_info = VkInstanceCreateInfo {
+    let instance_create_info = VkInstanceCreateInfo {
         s_type: VkStructureType::InstanceCreateInfo,
         p_next: ptr::null(),
         flags: flags::EMPTY,
-        p_application_info: &appinfo,
+        p_application_info: &application_info,
         pp_enabled_layer_names: ptr::null(),
         enabled_layer_count: 0 as u32,
         pp_enabled_extension_names: ptr::null(),
@@ -58,7 +59,7 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
 
     let mut result_instance: VkInstance = mem::uninitialized();
 
-    let instance_creation_result = create_instance_function(&create_info, ptr::null(), &mut result_instance);
+    let instance_creation_result = create_instance_function(&instance_create_info, ptr::null(), &mut result_instance);
 
     if instance_creation_result == VkResult::Success {
         Ok(result_instance)
@@ -113,6 +114,52 @@ unsafe fn get_queue_family_properties(physical_device: VkPhysicalDevice) -> Resu
     }
 }
 
+unsafe fn call_create_logical_device(physical_device: VkPhysicalDevice, chosen_queue_family_index: u32) -> Result<VkDevice, VkResult> {
+    let priorities = [0.0];
+
+    let device_queue_create_info = DeviceQueueCreateInfo {
+        s_type: VkStructureType::DeviceQueueCreateInfo,
+        p_next: ptr::null(),
+        flags: 0,
+        queue_family_index: chosen_queue_family_index,
+        queue_count: 1,
+        p_queue_priorities: priorities.as_ptr()
+    };
+
+    let device_create_info = DeviceCreateInfo {
+        s_type: VkStructureType::DeviceCreateInfo,
+        p_next: ptr::null(),
+        flags: 0,
+        queue_create_info_count: 1,
+        p_queue_create_infos: &device_queue_create_info,
+        enabled_layer_count: 0,
+        pp_enabled_layer_names: ptr::null(),
+        enabled_extension_count: 0,
+        pp_enabled_extension_names: ptr::null(),
+        p_enabled_features: ptr::null()
+    };
+
+
+    let create_logical_device_function: vkCreateDevice = 
+        get_vk_function_with_null_vk_instance(vk_functions::CREATE_LOGICAL_DEVICE);
+
+    let mut logical_device: VkDevice = mem::uninitialized();
+
+    let logical_device_creation_result =
+        create_logical_device_function(physical_device, &device_create_info, ptr::null_mut(), &mut logical_device);
+
+    if logical_device_creation_result == VkResult::Success {
+        Ok(logical_device)
+    }
+    else {
+        Err(logical_device_creation_result)
+    }
+}
+
+fn bit_and(value: u32, bit_mask_value: u32) -> bool {
+    value & bit_mask_value == bit_mask_value
+}
+
 ///
 /// This is the most complex thing in whole library by far.
 ///
@@ -129,9 +176,10 @@ unsafe fn get_queue_family_properties(physical_device: VkPhysicalDevice) -> Resu
 ///
 /// 3) VkInstance is created (thing that is responsible for stateful communication with Vulkan-compatibe devices)
 /// 4) vkEnumeratePhysicalDevices is called two times in order to get data about first Vulkan-compatible physical device
-/// 5) vkGetPhysicalDeviceQueueFamilyProperties to find a queueFamily that can be used for rendering
+/// 5) vkGetPhysicalDeviceQueueFamilyProperties to find a queueFamily that can be used for rendering graphics
+/// 6) vkCreateDevice to create a logical device with chosen queue family that will be used later for sending commands
 ///
-/// 6) vkDestroyInstance is called to clean up everything
+/// 7) vkDestroyInstance is called to clean up everything
 ///
 pub fn main() -> i32 {
     println!();
@@ -180,12 +228,31 @@ pub fn main() -> i32 {
 
             println!("Chosen Vulkan physical device (bear with me) queue family properties count: {}", physical_devices.len());
 
+            let mut chosen_queue_family_index = 0;
+            let mut index_was_found = false;
             for i in 0..queue_families_properties.len() {
                 println!("  Queue family number {} has flags = {:b} and queue count = {}",
                     i, queue_families_properties[i].queue_flags, queue_families_properties[i].queue_count);
+
+                if bit_and(queue_families_properties[i].queue_flags, flags::QUEUE_GRAPHICS_BIT)  {
+                    println!("Queue family with graphics support (bitmask {:b}) was found at index: {}", flags::QUEUE_GRAPHICS_BIT, i);
+                    chosen_queue_family_index = i as u32;
+                    index_was_found = true;
+
+                    break;
+                }
             }
 
+            assert_eq!(index_was_found, true, "Index with graphics support must be found!");
+
             //vkGetPhysicalDeviceQueueFamilyProperties END
+
+
+            //vkCreateDevice START
+
+            let _logical_device = call_create_logical_device(chosen_physical_device, chosen_queue_family_index).expect("Logical device must be created successfully!");
+
+            //vkCreateDevice END
 
 
             //vkDestroyInstance START

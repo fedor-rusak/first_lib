@@ -140,7 +140,7 @@ pub enum VkResult {
     SuboptimalKhr = 1000001003,
     ErrorOutOfDateKhr = -1000001004,
     ErrorIncompatibleDisplayKhr = -1000003001,
-    ErrorValidationFailedExt = -1000011001,
+    ErrorValidationFailedExt = -1000011001
 }
 
 
@@ -154,7 +154,7 @@ pub struct VkInstanceCreateInfo {
     pub enabled_layer_count: uint32_t,
     pub pp_enabled_layer_names: *const *const c_char,
     pub enabled_extension_count: uint32_t,
-    pub pp_enabled_extension_names: *const *const c_char,
+    pub pp_enabled_extension_names: *const *const c_char
 }
 
 
@@ -167,7 +167,7 @@ pub struct VkApplicationInfo {
     pub application_version: uint32_t,
     pub p_engine_name: *const c_char,
     pub engine_version: uint32_t,
-    pub api_version: uint32_t,
+    pub api_version: uint32_t
 }
 
 #[allow(missing_copy_implementations)]
@@ -185,7 +185,7 @@ pub struct DeviceCreateInfo {
     pub pp_enabled_layer_names: *const *const c_char,
     pub enabled_extension_count: uint32_t,
     pub pp_enabled_extension_names: *const *const c_char,
-    pub p_enabled_features: *const PhysicalDeviceFeatures,
+    pub p_enabled_features: *const PhysicalDeviceFeatures
 }
 
 #[derive(Debug, Clone)]
@@ -196,7 +196,7 @@ pub struct DeviceQueueCreateInfo {
     pub flags: Flags,
     pub queue_family_index: uint32_t,
     pub queue_count: uint32_t,
-    pub p_queue_priorities: *const c_float,
+    pub p_queue_priorities: *const c_float
 }
 
  #[repr(C)]
@@ -255,7 +255,7 @@ pub struct PhysicalDeviceFeatures {
     pub sparse_residency16samples: Bool32,
     pub sparse_residency_aliased: Bool32,
     pub variable_multisample_rate: Bool32,
-    pub inherited_queries: Bool32,
+    pub inherited_queries: Bool32
 }
 
 #[repr(C)]
@@ -263,7 +263,7 @@ pub struct PhysicalDeviceFeatures {
 pub struct VkExtent3D {
     pub width: u32,
     pub height: u32,
-    pub depth: u32,
+    pub depth: u32
 }
 
 #[repr(C)]
