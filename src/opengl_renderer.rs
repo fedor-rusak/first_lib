@@ -28,7 +28,8 @@ extern fn on_resize_callback(window: *mut GLFWwindow, width: i32, height: i32) {
 
 
 pub fn main() -> i32 {
-	println!("Hello from rust-ffi-glfw!");
+	println!();
+	println!("Hello from render_lib OpenGL renderer!");
 
 	unsafe {
 		let init_result = glfwInit();

@@ -28,7 +28,7 @@ mod vk_functions {
 /// 3) get pointer to Vulkan function
 /// 4) call instance creation
 ///
-unsafe fn call_create_instance(result_instance: &mut VkInstance) -> VkResult {
+unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
     let app_name = CString::new("VulkanTest").unwrap();
     let raw_name = app_name.as_ptr();
 
@@ -56,9 +56,61 @@ unsafe fn call_create_instance(result_instance: &mut VkInstance) -> VkResult {
     let create_instance_function: vkCreateInstance =
         get_vk_function_with_null_vk_instance(vk_functions::CREATE_INSTANCE);
 
-    let instance_creation_result = create_instance_function(&create_info, ptr::null(), result_instance);
+    let mut result_instance: VkInstance = mem::uninitialized();
 
-    instance_creation_result
+    let instance_creation_result = create_instance_function(&create_info, ptr::null(), &mut result_instance);
+
+    if instance_creation_result == VkResult::Success {
+        Ok(result_instance)
+    }
+    else {
+        Err(instance_creation_result)
+    }
+}
+
+unsafe fn get_physical_devices(instance: VkInstance) -> Result<Vec<VkPhysicalDevice>, VkResult> {
+    let enumerate_devices_function: vkEnumeratePhysicalDevices =
+        get_vk_function_with_null_vk_instance(vk_functions::ENUMERATE_PHYSICAL_DEVICES);
+
+    let mut device_count = mem::uninitialized();
+    enumerate_devices_function(instance, &mut device_count, ptr::null_mut());
+
+    let mut physical_devices = Vec::<VkPhysicalDevice>::with_capacity(device_count as usize);
+
+    let physical_device_enumarate_result = 
+        enumerate_devices_function(instance, &mut device_count, physical_devices.as_mut_ptr());
+
+    if physical_device_enumarate_result == VkResult::Success {
+        //driver does not know about our internal counter in Vec
+        physical_devices.set_len(device_count as usize);
+        
+        Ok(physical_devices)
+    }
+    else {
+        Err(physical_device_enumarate_result)
+    }
+}
+
+unsafe fn get_queue_family_properties(physical_device: VkPhysicalDevice) -> Result<Vec<VkQueueFamilyProperties>, &'static str> {
+    let get_queue_family_properties_function: vkGetPhysicalDeviceQueueFamilyProperties =
+        get_vk_function_with_null_vk_instance(vk_functions::GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES);
+
+    let mut queue_family_count = mem::uninitialized();
+    get_queue_family_properties_function(physical_device, &mut queue_family_count, ptr::null_mut());
+
+    let mut queue_families_properties = Vec::<VkQueueFamilyProperties>::with_capacity(queue_family_count as usize);
+
+    get_queue_family_properties_function(physical_device, &mut queue_family_count, queue_families_properties.as_mut_ptr());
+
+    if queue_family_count > 0 {
+        //driver does not know about our internal counter in Vec
+        queue_families_properties.set_len(queue_family_count as usize);
+
+        Ok(queue_families_properties)
+    }
+    else {
+        Err("No queue family properties were found!")
+    }
 }
 
 ///
@@ -82,7 +134,8 @@ unsafe fn call_create_instance(result_instance: &mut VkInstance) -> VkResult {
 /// 6) vkDestroyInstance is called to clean up everything
 ///
 pub fn main() -> i32 {
-	println!("Hello from rust-ffi-glfw!");
+    println!();
+	println!("Hello from render_lib Vulkan renderer!");
 
 	unsafe {
 		let init_result = glfwInit();
@@ -104,46 +157,17 @@ pub fn main() -> i32 {
 
             //vkCreateInstance START
 
-            let mut instance: VkInstance = mem::uninitialized();
-
-			let instance_creation_result = call_create_instance(&mut instance);
-
-            if instance_creation_result == VkResult::Success {
-                println!("Instance was created successfully!");
-            }
-            else {
-                println!("Failed to create instance! {:?}", instance_creation_result);
-                return 1
-            };
+			let vk_instance = call_create_instance().expect("To create Vulkan instance successfully!");
 
             //vkCreateInstance END
 
 
             //vkEnumeratePhysicalDevices START
 
-            let enumerate_devices_function: vkEnumeratePhysicalDevices =
-                get_vk_function_with_null_vk_instance(vk_functions::ENUMERATE_PHYSICAL_DEVICES);
+            let physical_devices = get_physical_devices(vk_instance).expect("Successfully enumerated physical devices!");
 
-            let mut device_count = mem::uninitialized();
-            enumerate_devices_function(instance, &mut device_count, ptr::null_mut());
+            println!("Vulkan physical device count: {}", physical_devices.len());
 
-            println!("Vulkan physical device count: {}", device_count);
-
-            let mut physical_devices = Vec::<VkPhysicalDevice>::with_capacity(device_count as usize);
-
-            let physical_device_enumarate_result = 
-                enumerate_devices_function(instance, &mut device_count, physical_devices.as_mut_ptr());
-
-            if physical_device_enumarate_result == VkResult::Success {
-                println!("Successfully enumerated physical devices!");
-            }
-            else {
-                println!("Failed to enumerate physical devices!");
-                return -1
-            }
-
-            //driver does not know about our internal counter in Vec
-            physical_devices.set_len(device_count as usize);
             let chosen_physical_device = physical_devices[0];
 
             //vkEnumeratePhysicalDevices END
@@ -151,25 +175,14 @@ pub fn main() -> i32 {
 
             //vkGetPhysicalDeviceQueueFamilyProperties START
 
-            let get_queue_family_properties_function: vkGetPhysicalDeviceQueueFamilyProperties =
-                get_vk_function_with_null_vk_instance(vk_functions::GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES);
+            let queue_families_properties =
+                get_queue_family_properties(chosen_physical_device).expect("Non-zero number of queue family properties for chosen physical device!");
 
-            let mut queue_family_count = mem::uninitialized();
-            get_queue_family_properties_function(chosen_physical_device, &mut queue_family_count, ptr::null_mut());
-
-            println!("On first physical device we have this queue family count: {}", queue_family_count);
-
-            let mut queue_families_properties = Vec::<VkQueueFamilyProperties>::with_capacity(queue_family_count as usize);
-
-            get_queue_family_properties_function(chosen_physical_device, &mut queue_family_count, queue_families_properties.as_mut_ptr());
-
-            //driver does not know about our internal counter in Vec
-            queue_families_properties.set_len(queue_family_count as usize);
+            println!("Chosen Vulkan physical device (bear with me) queue family properties count: {}", physical_devices.len());
 
             for i in 0..queue_families_properties.len() {
-                println!("Queue family number {} has flags = {:b} and queue count = {}",
+                println!("  Queue family number {} has flags = {:b} and queue count = {}",
                     i, queue_families_properties[i].queue_flags, queue_families_properties[i].queue_count);
-
             }
 
             //vkGetPhysicalDeviceQueueFamilyProperties END
@@ -180,7 +193,7 @@ pub fn main() -> i32 {
             let destroy_instance_function: vkDestroyInstance = 
                 get_vk_function_with_null_vk_instance(vk_functions::DESTROY_INSTANCE);
 
-            destroy_instance_function(instance, ptr::null());
+            destroy_instance_function(vk_instance, ptr::null());
 
             println!("Instance was destroyed successfully!");
 
