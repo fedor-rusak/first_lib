@@ -25,8 +25,9 @@ mod vk_functions {
 
 
 /// Replacement for `String::from_raw_buf`
-unsafe fn string_from_c_str(c_str: *const c_char) -> String {
-    String::from_utf8_lossy(CStr::from_ptr(c_str).to_bytes()).into_owned()
+unsafe fn string_from_c_str(c_str: *const c_char) -> &'static str {
+    let c_str = CStr::from_ptr(c_str);
+    c_str.to_str().unwrap()
 }
 
 ///
@@ -54,13 +55,14 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
 
     let mut extension_count: u32 = mem::uninitialized();
     let extension_names = glfwGetRequiredInstanceExtensions(&mut extension_count);
+    let data_slice = slice::from_raw_parts(extension_names, extension_count as usize);
 
-    let data: Vec<String> = slice::from_raw_parts(extension_names, extension_count as usize)
-                    .iter()
-                    .map(|extensions| string_from_c_str(*extensions))
-                    .collect();
+    let mut glfw3_advised_extensions = Vec::new();
+    for i in 0..extension_count as usize {
+        glfw3_advised_extensions.push(string_from_c_str(data_slice[i]));
+    }
 
-    println!("  GLFW3 advised to use {} extension(s): {:?}!", extension_count, data);
+    println!("  GLFW3 advised to use {} extension(s): {:?}!", extension_count, glfw3_advised_extensions);
 
     let instance_create_info = VkInstanceCreateInfo {
         s_type: VkStructureType::InstanceCreateInfo,
@@ -136,6 +138,10 @@ unsafe fn get_queue_family_properties(physical_device: VkPhysicalDevice) -> Resu
 unsafe fn call_create_logical_device(physical_device: VkPhysicalDevice, chosen_queue_family_index: u32) -> Result<VkDevice, VkResult> {
     let priorities = [0.0];
 
+    let really_important_extension_name = CString::new(VK_KHR_SWAPCHAIN_EXTENSION_NAME).unwrap();
+
+    let extension_names_raw = [really_important_extension_name.as_ptr()];
+
     let device_queue_create_info = DeviceQueueCreateInfo {
         s_type: VkStructureType::DeviceQueueCreateInfo,
         p_next: ptr::null(),
@@ -153,8 +159,8 @@ unsafe fn call_create_logical_device(physical_device: VkPhysicalDevice, chosen_q
         p_queue_create_infos: &device_queue_create_info,
         enabled_layer_count: 0,
         pp_enabled_layer_names: ptr::null(),
-        enabled_extension_count: 0,
-        pp_enabled_extension_names: ptr::null(),
+        enabled_extension_count: extension_names_raw.len() as u32,
+        pp_enabled_extension_names: extension_names_raw.as_ptr(),
         p_enabled_features: ptr::null()
     };
 

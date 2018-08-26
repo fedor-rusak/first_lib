@@ -75,6 +75,10 @@ pub mod flags {
     pub const QUEUE_SPARSE_BINDING_BIT: u32 = 8;
 }
 
+
+pub const VK_KHR_SWAPCHAIN_EXTENSION_NAME: &'static str = "VK_KHR_swapchain";
+
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VkStructureType {
