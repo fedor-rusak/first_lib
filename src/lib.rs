@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_opengl_then_vulkan_main() {
         opengl_renderer::main();
-        vulkan_renderer::main();
+        assert_eq!(vulkan_renderer::main(), 0);
     }
 
 }

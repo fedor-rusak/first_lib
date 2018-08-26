@@ -26,6 +26,33 @@ macro_rules! vk_define_handle{
     }
 }
 
+use std::fmt;
+
+macro_rules! handle_nondispatchable {
+    ($name: ident) => {
+        #[repr(C)]
+        #[derive(Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
+        pub struct $name (uint64_t);
+
+        impl $name{
+            pub fn null() -> $name{
+                $name(0)
+            }
+        }
+        impl fmt::Pointer for $name {
+            fn fmt(&self, f: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
+                write!(f, "0x{:x}", self.0)
+            }
+        }
+
+        impl fmt::Debug for $name {
+            fn fmt(&self, f: &mut fmt::Formatter) -> ::std::result::Result<(), fmt::Error> {
+                write!(f, "0x{:x}", self.0)
+            }
+        }
+    }
+}
+
 pub type c_void = ();
 pub type c_char = i8;
 pub type uint32_t = u32;
@@ -275,9 +302,38 @@ pub struct VkQueueFamilyProperties {
     pub min_image_transfer_granularity: VkExtent3D
 }
 
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VkCommandPoolCreateInfo {
+    pub s_type: VkStructureType,
+    pub p_next: *const c_void,
+    pub flags: Flags,
+    pub queue_family_index: uint32_t
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum VkCommandBufferLevel {
+    Primary = 0,
+    Secondary = 1
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VkCommandBufferAllocateInfo {
+    pub s_type: VkStructureType,
+    pub p_next: *const c_void,
+    pub command_pool: VkCommandPool,
+    pub level: VkCommandBufferLevel,
+    pub command_buffer_count: uint32_t
+}
+
 vk_define_handle!(VkInstance);
 vk_define_handle!(VkDevice);
 vk_define_handle!(VkPhysicalDevice);
+vk_define_handle!(VkCommandBuffer);
+
+handle_nondispatchable!(VkCommandPool);
 
 pub type vkCreateInstance = fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> VkResult;
 pub type vkDestroyInstance =  fn(instance: VkInstance, *const VkAllocationCallbacks);
@@ -286,3 +342,5 @@ pub type vkEnumeratePhysicalDevices = fn(instance: VkInstance, *mut uint32_t, *m
 
 pub type vkCreateDevice = fn(physical_device: VkPhysicalDevice, *const DeviceCreateInfo, *const VkAllocationCallbacks, *mut VkDevice) -> VkResult;
 pub type vkGetPhysicalDeviceQueueFamilyProperties = fn(physical_device: VkPhysicalDevice, *mut uint32_t, *mut VkQueueFamilyProperties) -> ();
+pub type vkCreateCommandPool = fn(logical_device: VkDevice, p_create_info: *const VkCommandPoolCreateInfo, p_allocator: *const VkAllocationCallbacks, p_command_pool: *mut VkCommandPool) -> VkResult;
+pub type vkAllocateCommandBuffers = fn(logical_device: VkDevice, p_allocate_info: *const VkCommandBufferAllocateInfo, p_command_buffers: *mut VkCommandBuffer) -> VkResult;

@@ -17,6 +17,8 @@ mod vk_functions {
     pub static ENUMERATE_PHYSICAL_DEVICES: &'static str = "vkEnumeratePhysicalDevices";
     pub static GET_PHYSICAL_DEVICE_QUEUE_FAMILY_PROPERTIES: &'static str = "vkGetPhysicalDeviceQueueFamilyProperties";
     pub static CREATE_LOGICAL_DEVICE: &'static str = "vkCreateDevice";
+    pub static CREATE_COMMAND_POOL: &'static str = "vkCreateCommandPool";
+    pub static ALLOCATE_COMMAND_BUFFERS: &'static str = "vkAllocateCommandBuffers";
     pub static DESTROY_INSTANCE: &'static str = "vkDestroyInstance";
 }
 
@@ -250,9 +252,64 @@ pub fn main() -> i32 {
 
             //vkCreateDevice START
 
-            let _logical_device = call_create_logical_device(chosen_physical_device, chosen_queue_family_index).expect("Logical device must be created successfully!");
+            let logical_device = call_create_logical_device(chosen_physical_device, chosen_queue_family_index).expect("Logical device must be created successfully!");
 
             //vkCreateDevice END
+
+
+            //vkCreateCommandPool START
+
+            let cmd_pool_create_info = VkCommandPoolCreateInfo{
+                s_type: VkStructureType::CommandPoolCreateInfo,
+                p_next: ptr::null(),
+                flags: 0,
+                queue_family_index: chosen_queue_family_index
+            };
+
+            let create_command_pool_function: vkCreateCommandPool = 
+                get_vk_function_with_null_vk_instance(vk_functions::CREATE_COMMAND_POOL);
+
+            let mut command_pool: VkCommandPool = mem::uninitialized();
+
+            let command_pool_creation_result = create_command_pool_function(logical_device, &cmd_pool_create_info, ptr::null(), &mut command_pool);
+
+            if command_pool_creation_result == VkResult::Success {
+                println!("Command pool was created successfully!");
+            }
+            else {
+                println!("Failed to create command pool!");
+                return -1
+            }
+
+            //vkCreateCommandPool END
+
+
+            //vkCreateCommandPool START
+
+            let buffer_allocation_info = VkCommandBufferAllocateInfo {
+                s_type: VkStructureType::CommandBufferAllocateInfo,
+                p_next: ptr::null(),
+                command_pool: command_pool,
+                level: VkCommandBufferLevel::Primary,
+                command_buffer_count: 1
+            };
+
+            let allocate_command_buffers_function: vkAllocateCommandBuffers = 
+                get_vk_function_with_null_vk_instance(vk_functions::ALLOCATE_COMMAND_BUFFERS);
+
+            let mut command_buffers: VkCommandBuffer = mem::uninitialized();
+
+            let command_buffers_allocation_result = allocate_command_buffers_function(logical_device, &buffer_allocation_info, &mut command_buffers);
+
+            if command_buffers_allocation_result == VkResult::Success {
+                println!("Command buffer was allocated successfully!");
+            }
+            else {
+                println!("Failed to allocate command buffer!");
+                return -1
+            }
+
+            //vkCreateCommandPool END
 
 
             //vkDestroyInstance START
