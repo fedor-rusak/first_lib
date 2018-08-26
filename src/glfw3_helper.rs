@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 extern crate libc;
 
 use std::mem;
@@ -27,6 +29,8 @@ pub mod glfw_types {
 
 use self::glfw_types::*;
 
+type uint32_t = u32;
+
 #[link(name = "glfw3")]
 extern {
 	pub fn glfwInit() -> c_int;
@@ -40,6 +44,7 @@ extern {
 
 	pub fn glfwVulkanSupported() -> c_int;
 	pub fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> GLFWvkproc;
+	pub fn glfwGetRequiredInstanceExtensions(count : *mut uint32_t) -> *const *const c_char;
 }
 
 pub const GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(

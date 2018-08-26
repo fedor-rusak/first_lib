@@ -1,6 +1,7 @@
+use std::ffi::{CStr, CString};
 use std::mem;
 use std::ptr;
-use std::ffi::{CString};
+use std::slice;
 
 
 use glfw3_helper::*;
@@ -22,6 +23,11 @@ mod vk_functions {
     pub static DESTROY_INSTANCE: &'static str = "vkDestroyInstance";
 }
 
+
+/// Replacement for `String::from_raw_buf`
+unsafe fn string_from_c_str(c_str: *const c_char) -> String {
+    String::from_utf8_lossy(CStr::from_ptr(c_str).to_bytes()).into_owned()
+}
 
 ///
 /// This function creates Vulkan instance. Which means:
@@ -45,6 +51,17 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
         api_version: vk_make_version!(1, 1, 77),
     };
 
+
+    let mut extension_count: u32 = mem::uninitialized();
+    let extension_names = glfwGetRequiredInstanceExtensions(&mut extension_count);
+
+    let data: Vec<String> = slice::from_raw_parts(extension_names, extension_count as usize)
+                    .iter()
+                    .map(|extensions| string_from_c_str(*extensions))
+                    .collect();
+
+    println!("  GLFW3 advised to use {} extension(s): {:?}!", extension_count, data);
+
     let instance_create_info = VkInstanceCreateInfo {
         s_type: VkStructureType::InstanceCreateInfo,
         p_next: ptr::null(),
@@ -52,8 +69,8 @@ unsafe fn call_create_instance() -> Result<VkInstance, VkResult> {
         p_application_info: &application_info,
         pp_enabled_layer_names: ptr::null(),
         enabled_layer_count: 0 as u32,
-        pp_enabled_extension_names: ptr::null(),
-        enabled_extension_count: 0 as u32,
+        pp_enabled_extension_names: extension_names,
+        enabled_extension_count: extension_count
     };
 
     let create_instance_function: vkCreateInstance =
