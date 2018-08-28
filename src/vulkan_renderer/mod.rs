@@ -202,9 +202,13 @@ fn bit_and(value: u32, bit_mask_value: u32) -> bool {
 /// 3) VkInstance is created (thing that is responsible for stateful communication with Vulkan-compatibe devices)
 /// 4) vkEnumeratePhysicalDevices is called two times in order to get data about first Vulkan-compatible physical device
 /// 5) vkGetPhysicalDeviceQueueFamilyProperties to find a queueFamily that can be used for rendering graphics
-/// 6) vkCreateDevice to create a logical device with chosen queue family that will be used later for sending commands
+/// 6) glfwGetPhysicalDevicePresentationSupport to check if our queue family supports presentation (means we can show images via swapchain surfaces)
+/// 7) vkCreateDevice to create a logical device with chosen queue family that will be used later for sending commands
 ///
-/// 7) vkDestroyInstance is called to clean up everything
+/// 8) vkCreateCommandPool Alice is falling deeper...
+/// 9) vkCommandBufferAllocate and deeper...
+///
+/// 10) vkDestroyInstance is called to clean up everything
 ///
 pub fn main() -> i32 {
     println!();
@@ -273,6 +277,22 @@ pub fn main() -> i32 {
             //vkGetPhysicalDeviceQueueFamilyProperties END
 
 
+            //glfwGetPhysicalDevicePresentationSupport START
+
+            let presentation_check_result =
+                glfwGetPhysicalDevicePresentationSupport(vk_instance, chosen_physical_device, chosen_queue_family_index);
+
+            if GLFW_TRUE == presentation_check_result {
+                println!("Chosen queue family index has presentation support!");
+            }
+            else {
+                println!("You need a separate family queue index for presentation! Currently not supported!");
+                return -1
+            }
+
+            //glfwGetPhysicalDevicePresentationSupport END
+
+
             //vkCreateDevice START
 
             let logical_device = call_create_logical_device(chosen_physical_device, chosen_queue_family_index).expect("Logical device must be created successfully!");
@@ -307,7 +327,7 @@ pub fn main() -> i32 {
             //vkCreateCommandPool END
 
 
-            //vkCreateCommandPool START
+            //vkCommandBufferAllocate START
 
             let buffer_allocation_info = VkCommandBufferAllocateInfo {
                 s_type: VkStructureType::CommandBufferAllocateInfo,
@@ -332,7 +352,7 @@ pub fn main() -> i32 {
                 return -1
             }
 
-            //vkCreateCommandPool END
+            //vkCommandBufferAllocate END
 
 
             //vkDestroyInstance START

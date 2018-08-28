@@ -9,7 +9,7 @@ use std::ffi::{CString};
 use self::libc::{c_int, c_void, c_uint, c_char};
 
 
-use vulkan_renderer::vulkan_types::VkInstance;
+use vulkan_renderer::vulkan_types::{VkInstance, VkPhysicalDevice};
 
 pub mod glfw_types {
 #![allow(dead_code)]
@@ -45,6 +45,7 @@ extern {
 	pub fn glfwVulkanSupported() -> c_int;
 	pub fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> GLFWvkproc;
 	pub fn glfwGetRequiredInstanceExtensions(count : *mut uint32_t) -> *const *const c_char;
+	pub fn glfwGetPhysicalDevicePresentationSupport(instance: VkInstance, device: VkPhysicalDevice, queue_family_index: u32) -> i32;
 }
 
 pub const GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(
