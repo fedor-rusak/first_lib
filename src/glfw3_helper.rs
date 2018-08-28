@@ -9,7 +9,7 @@ use std::ffi::{CString};
 use self::libc::{c_int, c_void, c_uint, c_char};
 
 
-use vulkan_renderer::vulkan_types::{VkInstance, VkPhysicalDevice};
+use vulkan_renderer::vulkan_types::{VkInstance, VkPhysicalDevice, VkResult, VkAllocationCallbacks, VkSurfaceKHR};
 
 pub mod glfw_types {
 #![allow(dead_code)]
@@ -25,6 +25,9 @@ pub mod glfw_types {
 
     pub const GLFW_TRUE: i32 = 1;
     pub const GLFW_FALSE: i32 = 0;
+
+    pub const GLFW_CLIENT_API: i32 = 22001;
+    pub const GLFW_NO_API: i32 = 0;
 }
 
 use self::glfw_types::*;
@@ -46,6 +49,8 @@ extern {
 	pub fn glfwGetInstanceProcAddress(vkInstance: *mut VkInstance, function_name: *const c_char) -> GLFWvkproc;
 	pub fn glfwGetRequiredInstanceExtensions(count : *mut uint32_t) -> *const *const c_char;
 	pub fn glfwGetPhysicalDevicePresentationSupport(instance: VkInstance, device: VkPhysicalDevice, queue_family_index: u32) -> i32;
+	pub fn glfwWindowHint(hint: i32, value: i32) -> ();
+	pub fn glfwCreateWindowSurface(instance: VkInstance, window: *mut GLFWwindow, p_allocators: *const VkAllocationCallbacks, surface: &mut VkSurfaceKHR) -> VkResult;
 }
 
 pub const GL_COLOR_BUFFER_BIT: c_uint = 0x00004000; //it is a macro constant :(

@@ -20,11 +20,11 @@ mod vk_functions {
     pub static CREATE_LOGICAL_DEVICE: &'static str = "vkCreateDevice";
     pub static CREATE_COMMAND_POOL: &'static str = "vkCreateCommandPool";
     pub static ALLOCATE_COMMAND_BUFFERS: &'static str = "vkAllocateCommandBuffers";
+    pub static DESTROY_SURFACE: &'static str = "vkDestroySurfaceKHR";
     pub static DESTROY_INSTANCE: &'static str = "vkDestroyInstance";
 }
 
 
-/// Replacement for `String::from_raw_buf`
 unsafe fn string_from_c_str(c_str: *const c_char) -> &'static str {
     let c_str = CStr::from_ptr(c_str);
     c_str.to_str().unwrap()
@@ -207,8 +207,10 @@ fn bit_and(value: u32, bit_mask_value: u32) -> bool {
 ///
 /// 8) vkCreateCommandPool Alice is falling deeper...
 /// 9) vkCommandBufferAllocate and deeper...
+/// 10) create surface!!!!! There is even a window shown for a second!!! This is WSI in action and native stuff is kep inside GLFW3!!!
 ///
-/// 10) vkDestroyInstance is called to clean up everything
+/// 11) vkDestroySurfaceKHR to free WSI related stuff
+/// 12) vkDestroyInstance is called to clean up everything
 ///
 pub fn main() -> i32 {
     println!();
@@ -320,7 +322,7 @@ pub fn main() -> i32 {
                 println!("Command pool was created successfully!");
             }
             else {
-                println!("Failed to create command pool!");
+                println!("Failed to create command pool! Result: {:?}", command_pool_creation_result);
                 return -1
             }
 
@@ -348,11 +350,45 @@ pub fn main() -> i32 {
                 println!("Command buffer was allocated successfully!");
             }
             else {
-                println!("Failed to allocate command buffer!");
+                println!("Failed to allocate command buffer! Result: {:?}", command_buffers_allocation_result);
                 return -1
             }
 
             //vkCommandBufferAllocate END
+
+
+            //VkSurfaceKHR creation START
+
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+            let string = CString::new("Hello from render_lib Vulkan renderer!").unwrap(); //tricky stuff. If written in one line string would vanish!
+            let title = string.as_ptr() as *const c_char;
+            let window: *mut GLFWwindow = glfwCreateWindow(640, 480, title, ptr::null_mut(), ptr::null_mut());
+
+            let mut surface: VkSurfaceKHR = mem::uninitialized();
+            let surface_creation_result = glfwCreateWindowSurface(vk_instance, window, ptr::null(), &mut surface);
+
+            if surface_creation_result == VkResult::Success {
+                println!("Surface was created with help of GLFW3!");
+            }
+            else {
+                println!("Failed to create surface with help of GLFW3! Result: {:?}", surface_creation_result);
+            }
+            
+
+            //VkSurfaceKHR creation END
+
+
+            //vkDestroySurfaceKHR START
+
+            let destroy_surface_function: vkDestroySurfaceKHR = 
+                get_vk_function_with_null_vk_instance(vk_functions::DESTROY_SURFACE);
+
+            destroy_surface_function(vk_instance, surface, ptr::null());
+
+            println!("Surface was destroyed successfully!");            
+
+            //vkDestroySurfaceKHR END
 
 
             //vkDestroyInstance START

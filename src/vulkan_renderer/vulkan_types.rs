@@ -338,8 +338,10 @@ vk_define_handle!(VkPhysicalDevice);
 vk_define_handle!(VkCommandBuffer);
 
 handle_nondispatchable!(VkCommandPool);
+handle_nondispatchable!(VkSurfaceKHR);
 
 pub type vkCreateInstance = fn(*const VkInstanceCreateInfo, *const VkAllocationCallbacks, *mut VkInstance) -> VkResult;
+pub type vkDestroySurfaceKHR = fn(nstance: VkInstance, surface: VkSurfaceKHR, p_allocator: *const VkAllocationCallbacks) -> ();
 pub type vkDestroyInstance =  fn(instance: VkInstance, *const VkAllocationCallbacks);
 
 pub type vkEnumeratePhysicalDevices = fn(instance: VkInstance, *mut uint32_t, *mut VkPhysicalDevice) -> VkResult;
