@@ -375,8 +375,168 @@ pub fn main() -> i32 {
                 println!("Failed to create surface with help of GLFW3! Result: {:?}", surface_creation_result);
             }
             
-
             //VkSurfaceKHR creation END
+
+
+            //swapchain stuff START
+
+                // Get the list of VkFormats that are supported:
+                // uint32_t formatCount;
+                // res = vkGetPhysicalDeviceSurfaceFormatsKHR(info.gpus[0], info.surface, &formatCount, NULL);
+                // assert(res == VK_SUCCESS);
+                // VkSurfaceFormatKHR *surfFormats = (VkSurfaceFormatKHR *)malloc(formatCount * sizeof(VkSurfaceFormatKHR));
+                // res = vkGetPhysicalDeviceSurfaceFormatsKHR(info.gpus[0], info.surface, &formatCount, surfFormats);
+                // assert(res == VK_SUCCESS);
+                // // If the format list includes just one entry of VK_FORMAT_UNDEFINED,
+                // // the surface has no preferred format.  Otherwise, at least one
+                // // supported format will be returned.
+                // if (formatCount == 1 && surfFormats[0].format == VK_FORMAT_UNDEFINED) {
+                //     info.format = VK_FORMAT_B8G8R8A8_UNORM;
+                // } else {
+                //     assert(formatCount >= 1);
+                //     info.format = surfFormats[0].format;
+                // }
+                // free(surfFormats);
+
+
+                // VkSurfaceCapabilitiesKHR surfCapabilities;
+
+                // res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(info.gpus[0], info.surface, &surfCapabilities);
+                // assert(res == VK_SUCCESS);
+
+                // VkExtent2D swapchainExtent;
+                // // width and height are either both 0xFFFFFFFF, or both not 0xFFFFFFFF.
+                // if (surfCapabilities.currentExtent.width == 0xFFFFFFFF) {
+                //     // If the surface size is undefined, the size is set to
+                //     // the size of the images requested.
+                //     swapchainExtent.width = info.width;
+                //     swapchainExtent.height = info.height;
+                //     if (swapchainExtent.width < surfCapabilities.minImageExtent.width) {
+                //         swapchainExtent.width = surfCapabilities.minImageExtent.width;
+                //     } else if (swapchainExtent.width > surfCapabilities.maxImageExtent.width) {
+                //         swapchainExtent.width = surfCapabilities.maxImageExtent.width;
+                //     }
+
+                //     if (swapchainExtent.height < surfCapabilities.minImageExtent.height) {
+                //         swapchainExtent.height = surfCapabilities.minImageExtent.height;
+                //     } else if (swapchainExtent.height > surfCapabilities.maxImageExtent.height) {
+                //         swapchainExtent.height = surfCapabilities.maxImageExtent.height;
+                //     }
+                // } else {
+                //     // If the surface size is defined, the swap chain size must match
+                //     swapchainExtent = surfCapabilities.currentExtent;
+                // }
+
+                // // The FIFO present mode is guaranteed by the spec to be supported
+                // // Also note that current Android driver only supports FIFO
+
+                // // Determine the number of VkImage's to use in the swap chain.
+                // // We need to acquire only 1 presentable image at at time.
+                // // Asking for minImageCount images ensures that we can acquire
+                // // 1 presentable image as long as we present it before attempting
+                // // to acquire another.
+                // uint32_t desiredNumberOfSwapChainImages = surfCapabilities.minImageCount;
+
+
+                // VkSurfaceTransformFlagBitsKHR preTransform;
+                // if (surfCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+                //     preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+                // } else {
+                //     preTransform = surfCapabilities.currentTransform;
+                // }
+
+
+                // VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+
+                // // Find a supported composite alpha mode - one of these is guaranteed to be set
+                //     VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+                //     VkCompositeAlphaFlagBitsKHR compositeAlphaFlags[4] = {
+                //         VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+                //         VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+                //         VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+                //         VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+                //     };
+                //     for (uint32_t i = 0; i < sizeof(compositeAlphaFlags); i++) {
+                //         if (surfCapabilities.supportedCompositeAlpha & compositeAlphaFlags[i]) {
+                //             compositeAlpha = compositeAlphaFlags[i];
+                //             break;
+                //         }
+                //     }
+
+
+                //     VkSwapchainCreateInfoKHR swapchain_ci = {};
+                //     swapchain_ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+                //     swapchain_ci.pNext = NULL;
+                //     swapchain_ci.surface = surface;
+                //     swapchain_ci.minImageCount = desiredNumberOfSwapChainImages;
+                //     swapchain_ci.imageFormat = info.format;
+                //     swapchain_ci.imageExtent.width = swapchainExtent.width;
+                //     swapchain_ci.imageExtent.height = swapchainExtent.height;
+                //     swapchain_ci.preTransform = preTransform;
+                //     swapchain_ci.compositeAlpha = compositeAlpha;
+                //     swapchain_ci.imageArrayLayers = 1;
+                //     swapchain_ci.presentMode = swapchainPresentMode;
+                //     swapchain_ci.oldSwapchain = VK_NULL_HANDLE;
+                //     swapchain_ci.clipped = true;
+                //     swapchain_ci.imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+                //     swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                //     swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                //     swapchain_ci.queueFamilyIndexCount = 0; !!! must be chosen one !!!
+                //     swapchain_ci.pQueueFamilyIndices = NULL;
+
+                //     Swapchain swap_chain;
+                //     res = vkCreateSwapchainKHR(info.device, &swapchain_ci, NULL, &swap_chain);
+                //     assert(res == VK_SUCCESS);
+
+            //swapchain stuff END
+
+
+            // image thingy START
+    
+                // res = vkGetSwapchainImagesKHR(info.device, info.swap_chain, &info.swapchainImageCount, NULL);
+                // assert(res == VK_SUCCESS);
+
+                // VkImage *swapchainImages = (VkImage *)malloc(info.swapchainImageCount * sizeof(VkImage));
+                // assert(swapchainImages);
+                // res = vkGetSwapchainImagesKHR(info.device, info.swap_chain, &info.swapchainImageCount, swapchainImages);
+                // assert(res == VK_SUCCESS);
+
+                // info.buffers.resize(info.swapchainImageCount);
+                // for (uint32_t i = 0; i < info.swapchainImageCount; i++) {
+                //     info.buffers[i].image = swapchainImages[i];
+                // }
+                // free(swapchainImages);
+
+
+            // image thingy END
+
+
+            //image view part START
+
+                // for (uint32_t i = 0; i < info.swapchainImageCount; i++) {
+                //     VkImageViewCreateInfo color_image_view = {};
+                //     color_image_view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                //     color_image_view.pNext = NULL;
+                //     color_image_view.flags = 0;
+                //     color_image_view.image = info.buffers[i].image;
+                //     color_image_view.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                //     color_image_view.format = info.format;
+                //     color_image_view.components.r = VK_COMPONENT_SWIZZLE_R;
+                //     color_image_view.components.g = VK_COMPONENT_SWIZZLE_G;
+                //     color_image_view.components.b = VK_COMPONENT_SWIZZLE_B;
+                //     color_image_view.components.a = VK_COMPONENT_SWIZZLE_A;
+                //     color_image_view.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                //     color_image_view.subresourceRange.baseMipLevel = 0;
+                //     color_image_view.subresourceRange.levelCount = 1;
+                //     color_image_view.subresourceRange.baseArrayLayer = 0;
+                //     color_image_view.subresourceRange.layerCount = 1;
+
+                //     res = vkCreateImageView(info.device, &color_image_view, NULL, &info.buffers[i].view);
+                //     assert(res == VK_SUCCESS);
+                // }
+
+            //image view part END
 
 
             //vkDestroySurfaceKHR START
